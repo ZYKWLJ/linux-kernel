@@ -1,5 +1,4 @@
-build\display\text_display_width.o: \
- D:\1code\linux-kernel\src\display\text_display_width.c \
+build\11.timer\timer.o: D:\1code\linux-kernel\src\11.timer\timer.c \
  D:/1code/linux-kernel/include/include.h \
  D:/1code/linux-kernel/include/3.ProcessManagement/thread_info.h \
  include/include.h include/3.ProcessManagement/thread_info.h \

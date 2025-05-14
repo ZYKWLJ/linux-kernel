@@ -83,6 +83,8 @@
         "stdio.h": "c",
         "thread_info.h": "c",
         "task_info.h": "c",
-        "task_struct.h": "c"
+        "task_struct.h": "c",
+        "exec_domain.h": "c",
+        "timer.h": "c"
     }
 }

@@ -1,5 +1,5 @@
-build\display\text_display_width.o: \
- D:\1code\linux-kernel\src\display\text_display_width.c \
+build\3.ProcessManagement\mm_segment.o: \
+ D:\1code\linux-kernel\src\3.ProcessManagement\mm_segment.c \
  D:/1code/linux-kernel/include/include.h \
  D:/1code/linux-kernel/include/3.ProcessManagement/thread_info.h \
  include/include.h include/3.ProcessManagement/thread_info.h \

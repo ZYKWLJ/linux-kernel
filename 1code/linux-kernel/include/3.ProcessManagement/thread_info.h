@@ -1,21 +1,8 @@
 #ifndef THREAD_INFO_H_
 #define THREAD_INFO_H_
 #include "include.h"
+#include <time.h>
 typedef unsigned int __u32;
-
-typedef struct exec_domain
-{
-
-} *E_exec_domain;
-
-typedef struct mm_segment_t
-{
-
-} *M_mm_segment_t;
-typedef struct restart_block
-{
-
-} *Re_restart_block;
 
 typedef struct thread_info_
 {
@@ -74,5 +61,5 @@ typedef struct thread_info_
 } *T_thread_info;
 
 T_thread_info T_thread_info_init(T_thread_info thread_info);
-
+void  print_thread_info(T_thread_info thread_info);
 #endif
