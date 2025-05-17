@@ -9,30 +9,36 @@
 #define PATH "/home/eyk/1code/Linux-0.11code/py/line.txt"
 int main(int argc, char *argv[])
 {
-    if (argc != 2)
+    if (argc < 2)
     {
         printf("usage: find_file <filename>\nPlease enter the filename you want to search for(only one name).\n");
     }
-    /**
-     * data descp: then argv[1] is the filename we want to search for
-     */
-    char *filename = argv[1];
-    /**
-     * data descp: the root directory of linux0.11
-     */
     FILE *fp = fopen(PATH, "r");
-    if (fp == NULL)
+    for (int i = 1; i < argc; i++)
     {
-        printf("Failed to open file.\n");
-    }
-    char line[256];
-    while (fgets(line, sizeof(line), fp))
-    {
-        if (strstr(line, filename) != NULL)
+        /**
+         * data descp: then argv[1] is the filename we want to search for
+         */
+        char *filename = argv[i];
+        /**
+         * data descp: the root directory of linux0.11
+         */
+
+        if (fp == NULL)
         {
-            printf("%s", line);
+            printf("Failed to open file.\n");
         }
+        char line[256];
+        while (fgets(line, sizeof(line), fp))
+        {
+            if (strstr(line, filename) != NULL)
+            {
+                printf("%s", line);
+            }
+        }
+        rewind(fp);
     }
+
     fclose(fp);
     return 0;
 }
