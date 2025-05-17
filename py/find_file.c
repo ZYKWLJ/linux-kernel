@@ -14,6 +14,10 @@ int main(int argc, char *argv[])
         printf("usage: find_file <filename>\nPlease enter the filename you want to search for(only one name).\n");
     }
     FILE *fp = fopen(PATH, "r");
+    if (fp == NULL)
+    {
+        printf("Failed to open file.\n");
+    }
     for (int i = 1; i < argc; i++)
     {
         /**
@@ -24,10 +28,6 @@ int main(int argc, char *argv[])
          * data descp: the root directory of linux0.11
          */
 
-        if (fp == NULL)
-        {
-            printf("Failed to open file.\n");
-        }
         char line[256];
         while (fgets(line, sizeof(line), fp))
         {
@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
                 printf("%s", line);
             }
         }
+        /**
+        * data descp: rewind the file pointer to the beginning of the file is necessary
+        */
         rewind(fp);
     }
 
