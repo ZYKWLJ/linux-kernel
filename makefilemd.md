@@ -265,3 +265,5 @@ init/main.o: init/main.c include/unistd.h include/sys/stat.h ...
 4. **自动化流程**：从源码编译到镜像生成、启动调试，均通过目标依赖关系自动触发。
 
 如需进一步分析某部分细节（如启动流程、驱动编译），可随时告知！
+
+dddddd
