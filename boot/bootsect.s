@@ -25,7 +25,7 @@
 # loads pretty fast by getting whole sectors at a time whenever possible.
 
 	.global _start, begtext, begdata, begbss, endtext, enddata, endbss
-	.text
+	.text   
 	begtext:
 	.data
 	begdata:
