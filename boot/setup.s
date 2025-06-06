@@ -15,10 +15,11 @@
 #
 
 # NOTE! These had better be the same as in bootsect.s!
+# 这里最好和前面的bootsect.s中的相等，为了一致性考虑
 
-	.equ INITSEG, 0x9000	# we move boot here - out of the way
-	.equ SYSSEG, 0x1000	# system loaded at 0x10000 (65536).
-	.equ SETUPSEG, 0x9020	# this is the current segment
+	.equ INITSEG, 0x9000	# we move boot here - out of the way，这是目前的bootsect的位置
+	.equ SYSSEG, 0x1000	# system loaded at 0x10000 (65536).这是目前的system的位置
+	.equ SETUPSEG, 0x9020	# this is the current segment.这是目前的setup模块位置
 
 	.global _start, begtext, begdata, begbss, endtext, enddata, endbss
 	.text
@@ -29,7 +30,13 @@
 	begbss:
 	.text
 
-	ljmp $SETUPSEG, $_start	
+# 长跳转指令，用于跨段跳转（修改 CS:IP 寄存器）
+# 效果：跳转到0x90200 + _start偏移量处执行，同时刷新 CPU 的代码段缓存
+
+	ljmp $SETUPSEG, $_start	 
+
+# 程序的起始地址
+
 _start:
 	mov %cs,%ax
 	mov %ax,%ds
@@ -46,59 +53,86 @@ _start:
 	mov $msg2,%bp
 	mov $0x1301, %ax
 	int $0x10
+
+####################################################################################
+#                    setup.s的第一个功能模块==>读取机器的参数                         #
+####################################################################################
+
 # ok, the read went well so we get current cursor position and save it for
 # posterity.
-	mov	$INITSEG, %ax	# this is done in bootsect already, but...
+	
+    mov	$INITSEG, %ax	# this is done in bootsect already, but...
+
+# 这里再次将ds设置成0x9000，虽然在bootsect中设置过了，但是，为了模块分明，linus觉得应该再次设置一下。
+
 	mov	%ax, %ds
 	mov	$0x03, %ah	# read cursor pos
 	xor	%bh, %bh
+
+# 获取光标信息----将光标位置存放在0x90000处，控制台初始化时会来取。
+
 	int	$0x10		# save it in known place, con_init fetches
 	mov	%dx, %ds:0	# it from 0x90000.
-# Get memory size (extended mem, kB)
 
-	mov	$0x88, %ah 
-	int	$0x15
-	mov	%ax, %ds:2
+# Get memory size (extended mem, kB)
+# 获取扩拓展内存的大小(KB)信息----并将其存放在0x90002处。
+	mov	$0x88, %ah # BIOS的功能号0x88
+	int	$0x15 # 调用BIOS中断0x15,将返回的扩展内存大小放在%ax里面
+	mov	%ax, %ds:2 # 将ax的值存放在0x90002处
+
+# 这里将来可以做一个接口，提供后面的打印！ 
+info_extended_memory:
+	.byte 13,10
+	.ascii "Now we are in setup ..."
+	.byte 13,10,13,10
 
 # Get video-card data:
-
+# 获取显示卡当前的显示模式----存放在在0x90004、0x90006中
 	mov	$0x0f, %ah
 	int	$0x10
-	mov	%bx, %ds:4	# bh = display page
-	mov	%ax, %ds:6	# al = video mode, ah = window width
+	mov	%bx, %ds:4	# bh = display page 存放当前页面
+	mov	%ax, %ds:6	# al = video mode, ah = window width 存放显示模式
+# %ds:7 存放字符号列数
 
 # check for EGA/VGA and some config parameters
-
+# 获取显示方式(EGA/VGA)并取参数----存放在在0x90008、0x9000A、0x9000C中
 	mov	$0x12, %ah
 	mov	$0x10, %bl
 	int	$0x10
-	mov	%ax, %ds:8
-	mov	%bx, %ds:10
-	mov	%cx, %ds:12
+	mov	%ax, %ds:8 # 存放当前功能号？
+	mov	%bx, %ds:10 # 存放安装的显示内存+显示状态(彩色/单色)
+	mov	%cx, %ds:12 # 显示卡特性参数
 
 # Get hd0 data
-
+# 取第一个磁盘信息----存放在在`0x90080`中
 	mov	$0x0000, %ax
 	mov	%ax, %ds
-	lds	%ds:4*0x41, %si
+	lds	%ds:4*0x41, %si # 取中段向量0x41的值，即hd0参数表的地址
 	mov	$INITSEG, %ax
 	mov	%ax, %es
-	mov	$0x0080, %di
-	mov	$0x10, %cx
+	mov	$0x0080, %di # 存放hd0参数表的地址为：0x90080
+	mov	$0x10, %cx # 共传输0x10字节(16字节，这也是表的长度)
 	rep
 	movsb
 
 # Get hd1 data
-
+# 取第二个硬盘信息----存放在`0x90090`中(理所当然，紧紧贴着硬盘1存放的位置)
 	mov	$0x0000, %ax
 	mov	%ax, %ds
-	lds	%ds:4*0x46, %si
+	lds	%ds:4*0x42, %si
+	mov	$0x0000, %ax
+	mov	%ax, %ds
+	lds	%ds:4*0x46, %si # 取中断向量0x46的值，也即hd1参数表的地址
 	mov	$INITSEG, %ax
 	mov	%ax, %es
-	mov	$0x0090, %di
-	mov	$0x10, %cx
+	mov	$0x0090, %di # 存放hd1参数表的地址为：0x90090
+	mov	$0x10, %cx # 共传输0x10字节(16字节，这也是表的长度)
 	rep
 	movsb
+####################################################################
+#这中间一部分都是后面再加上去的方便调试的信息，不是linus的原版本的信息。
+
+
 
 ## modify ds
 	mov $INITSEG,%ax
@@ -178,53 +212,83 @@ _start:
 #l:
 #	jmp l
 ##
+
+# 这中间一部分都是后面再加上去的方便调试的信息，不是linus的原版本的信息。
+####################################################################
+
+
+
+# 检查系统是否有第2个磁盘，如果不存在就把2个表清空，利用BIOS中断调用0x13的取盘功能。
 # Check that there IS a hd1 :-)
 
 	mov	$0x01500, %ax
 	mov	$0x81, %dl
 	int	$0x13
-	jc	no_disk1
-	cmp	$3, %ah
-	je	is_disk1
+	jc	no_disk1 
+	cmp	$3, %ah # 是硬盘吗(硬件类型=3)
+	je	is_disk1 # 如果两者相等的话，就是，跳转到is_disk上去
+
 no_disk1:
-	mov	$INITSEG, %ax
+	mov	$INITSEG, %ax # 第二个硬盘不存在就对他的硬盘表清零。
 	mov	%ax, %es
 	mov	$0x0090, %di
 	mov	$0x10, %cx
 	mov	$0x00, %ax
 	rep
 	stosb
+
 is_disk1:
 
-# now we want to move to protected mode ...
 
+
+# now we want to move to protected mode ...
+# 现在我们想移动到保护模式中去
+
+# 移动到保护模式过程中不允许中断的！
 	cli			# no interrupts allowed ! 
+
+####################################################################################
+#                    setup.s的第2个功能模块==>读取system模块到0x00000处               #
+####################################################################################
 
 # first we move the system to it's rightful place
 
-	mov	$0x0000, %ax
+	mov	$0x0000, %ax #移动到的目的地址
 	cld			# 'direction'=0, movs moves forward
+
 do_move:
-	mov	%ax, %es	# destination segment
+	mov	%ax, %es	# destination segment 目的代码
 	add	$0x1000, %ax
-	cmp	$0x9000, %ax
+	cmp	$0x9000, %ax #判断是不是已经把0x8000段开始的64KB的代码移动完了？
 	jz	end_move
-	mov	%ax, %ds	# source segment
+	mov	%ax, %ds	# source segment 源地址
 	sub	%di, %di
 	sub	%si, %si
-	mov 	$0x8000, %cx
-	rep
+	mov 	$0x8000, %cx #移动0x80000字节，也即64KB
+	rep # 没有移动完，这里会一直移动！
 	movsw
 	jmp	do_move
 
+
+####################################################################################
+#                setup.s的第3个功能模块==>为head.s工作在保护模式下做一些系统初始化工作  #
+####################################################################################
+
+# system移动完成后我们开始加载段描述符了
 # then we load the segment descriptors
 
-end_move:
+end_move: # 所以这个过程的名字叫结束移动(end_move)
 	mov	$SETUPSEG, %ax	# right, forgot this at first. didn't work :-)
-	mov	%ax, %ds
-	lidt	idt_48		# load idt with 0,0
-	lgdt	gdt_48		# load gdt with whatever appropriate
+	mov	%ax, %ds #ds指向本程序(setup)段
 
+####################################################################################
+#                setup.s的第3个功能模块1==>临时设置idt、gdt                          #
+####################################################################################    
+# 这里的ligt和lgdt是intelCPU实现的加载段描述符表寄存器的指令！
+	lidt	idt_48		# load idt with 0,0 #加载中断描述符表寄存器
+	lgdt	gdt_48		# load gdt with whatever appropriate #加载全局描述符表寄存器
+
+# 使能A20地址线，历史遗留问题(为了考虑兼容性而加的)
 # that was painless, now we enable A20
 
 	#call	empty_8042	# 8042 is the keyboard controller
@@ -237,6 +301,14 @@ end_move:
 	inb     $0x92, %al	# open A20 line(Fast Gate A20).
 	orb     $0b00000010, %al
 	outb    %al, $0x92
+
+
+# 这里是设置8259芯片中断的模块，将0x20-0x2F设置为其中断号
+# 本质上来说，是CPU与该芯片交互，设置中断。
+
+####################################################################################
+#             setup.s的第3个功能模块2==>摄制部8259芯片中断号0x20-0x2F                 #
+#################################################################################### 
 
 # well, that went ok, I hope. Now we have to reprogram the interrupts :-(
 # we put them right after the intel-reserved hardware interrupts, at
@@ -274,6 +346,13 @@ end_move:
 	.word	0x00eb,0x00eb
 	out	%al, $0xA1
 
+# 从此之后，就不再需要BIOS的工作了，接下来进行保护模式的切换了！
+
+
+####################################################################################
+#            setup.s的第3个功能模块3==>设置 CPU 的控制寄存器CR0，开启保护模式          #
+#################################################################################### 
+
 # well, that certainly wasn't fun :-(. Hopefully it works, and we don't
 # need no steenking BIOS anyway (except for the initial loading :-).
 # The BIOS-routine wants lots of unnecessary data, and it's less
@@ -283,19 +362,27 @@ end_move:
 # things as simple as possible, we do no register set-up or anything,
 # we let the gnu-compiled 32-bit programs do that. We just jump to
 # absolute address 0x00000, in 32-bit protected mode.
+
 	#mov	$0x0001, %ax	# protected mode (PE) bit
-	#lmsw	%ax		# This is it!
-	mov	%cr0, %eax	# get machine status(cr0|MSW)	
-	bts	$0, %eax	# turn on the PE-bit 
-	mov	%eax, %cr0	# protection enabled
+	#lmsw	%ax		# This is it! # 加载机器状态字CR0(控制寄存器)
+	mov	%cr0, %eax	# get machine status(cr0|MSW) #获取机器状态
+	bts	$0, %eax	# turn on the PE-bit  
+	mov	%eax, %cr0	# protection enabled          #开启保护模式
 				
 				# segment-descriptor        (INDEX:TI:RPL)
 	.equ	sel_cs0, 0x0008 # select for code segment 0 (  001:0 :00) 
+
+####################################################################################
+#                   setup.s的第4个功能模块== 跳转到head.s模块执行                    #
+####################################################################################
+
+# 也就是下面这条指令，很重要的！直接跳转到head.s,同时也是setup阶段的最后一条指令。
 	ljmp	$sel_cs0, $0	# jmp offset 0 of code segment 0 in gdt
 
 # This routine checks that the keyboard command queue is empty
 # No timeout is used - if this hangs there is something wrong with
 # the machine, and we probably couldn't proceed anyway.
+
 empty_8042:
 	.word	0x00eb,0x00eb
 	in	$0x64, %al	# 8042 status port
