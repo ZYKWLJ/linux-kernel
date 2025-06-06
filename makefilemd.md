@@ -267,3 +267,6 @@ init/main.o: init/main.c include/unistd.h include/sys/stat.h ...
 如需进一步分析某部分细节（如启动流程、驱动编译），可随时告知！
 
 dddddd
+# 将本地分支强制推送到远程仓库的main分支上，挺好！
+# 这样能够日常star！
+git push -f origin v0.11-explain:main
