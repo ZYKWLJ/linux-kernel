@@ -26,6 +26,7 @@ __res; })
 
 struct super_block super_block[NR_SUPER];
 /* this is initialized in init/main.c */
+/*机器具有的字节数(内存)*/
 int ROOT_DEV = 0;
 
 static void lock_super(struct super_block * sb)

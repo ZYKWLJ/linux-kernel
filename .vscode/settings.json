@@ -11,5 +11,13 @@
   "[asm]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 4
-  }
+},
+"files.associations": {
+    "system.h": "c",
+    "unistd.h": "c",
+    "time.h": "c",
+    "io.h": "c",
+    "cstdio": "c",
+    "string.h": "c"
+}
 }
