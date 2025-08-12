@@ -22,9 +22,9 @@ struct tm {
 	int tm_mday;
 	int tm_mon;
 	int tm_year;
-	int tm_wday;
-	int tm_yday;
-	int tm_isdst;
+	int tm_wday;/*一周中的第几天*/
+	int tm_yday;/*一年中的第几天*/
+	int tm_isdst;/*是否为夏令时*/
 };
 
 clock_t clock(void);

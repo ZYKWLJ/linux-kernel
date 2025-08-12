@@ -6,27 +6,16 @@
 
 #include <time.h>
 
-/*
- * This isn't the library routine, it is only used in the kernel.
- * as such, we don't care about years<1970 etc, but assume everything
- * is ok. Similarly, TZ etc is happily ignored. We just do everything
- * as easily as possible. Let's find something public for the library
- * routines (although I think minix times is public).
- */
-/*
- * PS. I hate whoever though up the year 1970 - couldn't they have gotten
- * a leap-year instead? I also hate Gregorius, pope or no. I'm grumpy.
- */
-#define MINUTE 60
-#define HOUR (60*MINUTE)
-#define DAY (24*HOUR)
-#define YEAR (365*DAY)
+#define MINUTE 60/*一分钟的秒数*/
+#define HOUR (60*MINUTE)/*一小时的秒数*/
+#define DAY (24*HOUR)/*一天的秒数*/
+#define YEAR (365*DAY)/*一年的秒数(不考虑闰年)*/
 
-/* interestingly, we assume leap-years */
+/*这里我们考虑了闰年的情况*/
 static int month[12] = {
 	0,
 	DAY*(31),
-	DAY*(31+29),
+	DAY*(31+29),/*闰年29天*/
 	DAY*(31+29+31),
 	DAY*(31+29+31+30),
 	DAY*(31+29+31+30+31),
@@ -40,21 +29,25 @@ static int month[12] = {
 
 long kernel_mktime(struct tm * tm)
 {
-	long res;
-	int year;
+	long res;/*记录结果*/
+	int year;/*此刻的年*/
+    /*以1970为原点，记录该时间点离原点距离。*/
 	if (tm->tm_year >= 70)
-	  year = tm->tm_year - 70;
+    /*如果年份大于等于70年,则年份减去70年，因为是记录从1970开始的秒数*/
+      year = tm->tm_year - 70;
 	else
-	  year = tm->tm_year + 100 -70; /* Y2K bug fix by hellotigercn 20110803 */
-/* magic offsets (y+1) needed to get leapyears right.*/
+	  year = tm->tm_year + 100 -70; /* 先加上100到2000，在减去70年 */
+    /* 计算年份的秒数,注意要考虑闰年的情况*/
+    /*这些年经过的秒数+每个闰年多出来的一天的秒数，注意是每一个，所以+1,这阶段有很多个闰年！*/
 	res = YEAR*year + DAY*((year+1)/4);
-	res += month[tm->tm_mon];
-/* and (y+2) here. If it wasn't a leap-year, we have to adjust */
+	res += month[tm->tm_mon];/* 计算当年到当月的秒数*/
+    /* 判断(y+2)不是闰年,且月份大于2月,则要减去一天。
+    例如2000年，举例1970就是32，就是闰年，不需要减，否则需要减一天*/
 	if (tm->tm_mon>1 && ((year+2)%4))
 		res -= DAY;
-	res += DAY*(tm->tm_mday-1);
-	res += HOUR*tm->tm_hour;
-	res += MINUTE*tm->tm_min;
-	res += tm->tm_sec;
-	return res;
+	res += DAY*(tm->tm_mday-1);/*本月过去的天数的秒数时间*/
+	res += HOUR*tm->tm_hour;/*本天过去的小时数的秒数时间*/
+	res += MINUTE*tm->tm_min;/*本小时过去的分钟的秒数时间*/
+	res += tm->tm_sec;/*本分钟过去的秒数时间*/
+	return res;/*返回从1970年1月1日0时0分0秒到该时间点的秒数*/
 }
