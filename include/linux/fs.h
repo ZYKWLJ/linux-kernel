@@ -39,7 +39,7 @@ void buffer_init(long buffer_end);
 #define I_MAP_SLOTS 8
 #define Z_MAP_SLOTS 8
 #define SUPER_MAGIC 0x137F
-
+// 打开的文件数量
 #define NR_OPEN 20
 #define NR_INODE 32
 #define NR_FILE 64

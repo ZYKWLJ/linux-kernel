@@ -16,7 +16,7 @@ typedef unsigned int sigset_t;		/* 32 bits */
 #define SIGTRAP		 5
 #define SIGABRT		 6
 #define SIGIOT		 6
-#define SIGUNUSED	 7
+#define SIGUNUSED	 7.
 #define SIGFPE		 8
 #define SIGKILL		 9
 #define SIGUSR1		10

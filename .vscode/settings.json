@@ -2,6 +2,12 @@
     "files.associations": {
         "string.h": "c",
         "stdarg.h": "c",
-        "sched.h": "c"
+        "sched.h": "c",
+        "kernel.h": "c",
+        "head.h": "c",
+        "fs.h": "c",
+        "mm.h": "c",
+        "signal.h": "c",
+        "segment.h": "c"
     }
 }
