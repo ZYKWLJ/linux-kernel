@@ -9,6 +9,7 @@
         "mm.h": "c",
         "signal.h": "c",
         "segment.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "system.h": "c"
     }
 }
