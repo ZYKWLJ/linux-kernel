@@ -1,24 +1,49 @@
-#define outb(value,port) \
-__asm__ ("outb %%al,%%dx"::"a" (value),"d" (port))
+// 向指定端口输出一个字节数据
+// value: 要输出的数据(8位)
+// port: 目标端口地址(16位)
+#define outb(value, port) \
+        __asm__ ("outb %%al, %%dx"  /* 汇编指令: 将AL寄存器的值输出到DX寄存器指定的端口 */ \
+        :: "a" (value), "d" (port) /* 约束条件: 
+                                * "a" (value): 将value放入EAX寄存器(AL是EAX的低8位)
+                                * "d" (port): 将port放入EDX寄存器
+                                */ \
+)
 
-
+// 从指定端口输入一个字节数据并返回
+// port: 要读取的端口地址(16位)
+// 返回值: 从端口读取的8位数据
 #define inb(port) ({ \
-unsigned char _v; \
-__asm__ volatile ("inb %%dx,%%al":"=a" (_v):"d" (port)); \
-_v; \
+        unsigned char _v; /* 声明临时变量存储读取的值 */ \
+        __asm__ volatile ( /* volatile确保汇编不会被编译器优化掉 */ \
+        "inb %%dx, %%al"  /* 汇编指令: 从DX寄存器指定的端口读取数据到AL寄存器 */ \
+        : "=a" (_v)       /* 输出约束: 将EAX寄存器(AL)的值存入变量_v */ \
+        : "d" (port)      /* 输入约束: 将port放入EDX寄存器 */ \
+        ); \
+        _v; /* 返回读取到的值 */ \
 })
 
-#define outb_p(value,port) \
-__asm__ ("outb %%al,%%dx\n" \
-		"\tjmp 1f\n" \
-		"1:\tjmp 1f\n" \
-		"1:"::"a" (value),"d" (port))
+// 向指定端口输出一个字节数据，并加入短暂延迟
+// 用于需要等待的硬件设备，确保数据已被处理
+#define outb_p(value, port) \
+__asm__ ( \
+        "outb %%al, %%dx\n"    /* 输出数据到端口 */ \
+        "\tjmp 1f\n"           /* 跳转到标签1f (1:) */ \
+        "1:\tjmp 1f\n"         /* 再次跳转，创建短暂延迟 */ \
+        "1:"                   /* 延迟结束的标签 */ \
+        :: "a" (value), "d" (port) /* 与outb相同的寄存器约束 */ \
+)
 
+// 从指定端口输入一个字节数据，加入短暂延迟并返回
+// 用于需要等待的硬件设备，确保数据已准备好
 #define inb_p(port) ({ \
-unsigned char _v; \
-__asm__ volatile ("inb %%dx,%%al\n" \
-	"\tjmp 1f\n" \
-	"1:\tjmp 1f\n" \
-	"1:":"=a" (_v):"d" (port)); \
-_v; \
+        unsigned char _v; /* 临时变量存储读取的值 */ \
+        __asm__ volatile ( \
+        "inb %%dx, %%al\n"    /* 从端口读取数据 */ \
+        "\tjmp 1f\n"          /* 跳转延迟 */ \
+        "1:\tjmp 1f\n"        /* 再次跳转增加延迟 */ \
+        "1:"                  /* 延迟结束标签 */ \
+        : "=a" (_v)           /* 输出约束: 结果存入_v */ \
+        : "d" (port)          /* 输入约束: 端口地址存入EDX */ \
+        ); \
+        _v; /* 返回读取到的值 */ \
 })
