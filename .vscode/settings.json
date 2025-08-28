@@ -10,6 +10,8 @@
         "signal.h": "c",
         "segment.h": "c",
         "types.h": "c",
-        "system.h": "c"
+        "system.h": "c",
+        "hdreg.h": "c",
+        "config.h": "c"
     }
 }
