@@ -1,14 +1,46 @@
 /*
- *  NOTE!!! memcpy(dest,src,n) assumes ds=es=normal data segment. This
- *  goes for all kernel functions (ds=es=kernel space, fs=local data,
- *  gs=null), as well as for all well-behaving user programs (ds=es=
- *  user data space). This is NOT a bug, as any user program that changes
- *  es deserves to die if it isn't careful.
+ * 内存复制函数 memcpy 的实现
+ *
+ * 功能：将指定长度的字节从源地址复制到目标地址
+ * 注意：此实现假设源地址和目标地址不重叠（如需处理重叠内存，请使用 memmove）
  */
-//#define memcpy(dest,src,n) ({ \
-//void * _res = dest; \
-//__asm__ __volatile__ ("cld;rep;movsb" \
-//	::"D" ((long)(_res)),"S" ((long)(src)),"c" ((long) (n)) \
-//	); \
-//_res; \
+
+/*
+ * 重要注意事项：
+ * memcpy(dest, src, n) 假设数据段寄存器 ds 和附加段寄存器 es 指向相同的常规数据段。
+ * 这一假设适用于：
+ * - 所有内核函数（ds = es = 内核空间，fs = 本地数据，gs = 空）
+ * - 所有行为良好的用户程序（ds = es = 用户数据空间）
+ *
+ * 这并非设计缺陷，因为任何修改 es 寄存器且不谨慎处理的用户程序，
+ * 其崩溃是预期且合理的结果。
+ */
+
+/*
+ * memcpy 宏定义实现（当前被注释掉）
+ *
+ * 参数：
+ *   dest - 目标内存地址（复制的目的地）
+ *   src  - 源内存地址（复制的来源）
+ *   n    - 需要复制的字节数
+ *
+ * 返回值：
+ *   目标内存地址 dest（便于链式操作）
+ *
+ * 实现说明：
+ * 使用 GNU C 扩展的内联汇编实现高效的内存复制，利用 x86 架构的字符串操作指令
+ */
+//#define memcpy(dest, src, n) ({ \
+//    void * _res = dest;               /* 保存目标地址用于返回 */ \
+//                                      /* 内联汇编部分 */ \
+//    __asm__ __volatile__ (            /* __volatile__ 确保汇编不被编译器优化移除 */ \
+//        "cld;                         /* 清除方向标志位(DF)，使地址递增 */ \
+//         rep;                         /* 重复执行后续指令，重复次数由 ecx 寄存器指定 */ \
+//         movsb"                       /* 移动一个字节：从 [ds:si] 到 [es:di]，并自动递增 si/di */ \
+//        ::                            /* 输入操作数列表（无输出操作数） */ \
+//        "D" ((long)(_res)),           /* 将 _res（目标地址）传入 edi 寄存器 */ \
+//        "S" ((long)(src)),            /* 将 src（源地址）传入 esi 寄存器 */ \
+//        "c" ((long)(n))               /* 将 n（字节数）传入 ecx 寄存器 */ \
+//    ); \
+//    _res;                             /* 返回目标地址 */ \
 //})
