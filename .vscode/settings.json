@@ -12,6 +12,7 @@
         "types.h": "c",
         "system.h": "c",
         "hdreg.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "tty.h": "c"
     }
 }

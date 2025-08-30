@@ -9,9 +9,6 @@
 .text
 .globl keyboard_interrupt
 
-
-
-
 size = 1024
 
 head = 4
@@ -22,11 +19,6 @@ buf = 16
 mode: .byte 0
 leds: .byte 2
 e0: .byte 0
-
-
-
-
-
 
 keyboard_interrupt:
  pushl %eax
@@ -73,10 +65,6 @@ set_e0: movb $1,e0
  jmp e0_e1
 set_e1: movb $2,e0
  jmp e0_e1
-
-
-
-
 
 
 put_queue:
@@ -156,8 +144,6 @@ num: xorb $2,leds
 
 
 
-
-
 cursor:
  subb $0x47,%al
  jb 1f
@@ -189,16 +175,11 @@ ok_cur: shll $16,%eax
  jmp put_queue
 
 
-
-
-
 num_table:
  .ascii "789 456 1230,"
 
 cur_table:
  .ascii "HA5 DGC YB623"
-
-
 
 
 func:
@@ -226,8 +207,6 @@ ok_func:
  jmp put_queue
 end_func:
  ret
-
-
 
 
 func_table:
@@ -317,21 +296,11 @@ do_self:
  call put_queue
 none: ret
 
-
-
-
-
-
 minus: cmpb $1,e0
  jne do_self
  movl $'/,%eax
  xorl %ebx,%ebx
  jmp put_queue
-
-
-
-
-
 
 key_table:
  .long none,do_self,do_self,do_self
@@ -400,9 +369,6 @@ key_table:
  .long none,none,none,none
 
 
-
-
-
 kb_wait:
  pushl %eax
 1: inb $0x64,%al
@@ -410,8 +376,6 @@ kb_wait:
  jne 1b
  popl %eax
  ret
-
-
 
 
 reboot:

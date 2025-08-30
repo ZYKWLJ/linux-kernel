@@ -485,4 +485,3 @@ void floppy_init(void)
     set_trap_gate(0x26, &floppy_interrupt);        // 设置软盘中断门
     outb(inb_p(0x21) & ~0x40, 0x21);               // 允许软盘中断（屏蔽字位6清零）
 }
- 
